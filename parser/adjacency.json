@@ -1,0 +1,126 @@
+{
+  "dependencies": {
+    "PetClinicApplication": [
+      "PetClinicRuntimeHints"
+    ],
+    "PetClinicRuntimeHints": [
+      "Vet"
+    ],
+    "for": [
+      "Vet"
+    ],
+    "public": [],
+    "Owner": [
+      "Pet",
+      "Visit"
+    ],
+    "OwnerController": [
+      "Owner"
+    ],
+    "Pet": [
+      "PetType",
+      "Visit"
+    ],
+    "PetController": [
+      "Owner",
+      "Pet",
+      "PetType",
+      "PetValidator"
+    ],
+    "PetType": [],
+    "PetTypeFormatter": [
+      "PetType"
+    ],
+    "PetValidator": [
+      "Pet"
+    ],
+    "Visit": [],
+    "VisitController": [
+      "Owner",
+      "Pet",
+      "Visit"
+    ],
+    "CacheConfiguration": [],
+    "CrashController": [],
+    "WebConfiguration": [],
+    "WelcomeController": [],
+    "Specialty": [
+      "Vet"
+    ],
+    "Vet": [
+      "Specialty"
+    ],
+    "VetController": [
+      "Vet",
+      "Vets"
+    ],
+    "Vets": [
+      "Vet"
+    ]
+  },
+  "dependents": {
+    "PetClinicRuntimeHints": [
+      "PetClinicApplication"
+    ],
+    "Vet": [
+      "PetClinicRuntimeHints",
+      "Specialty",
+      "VetController",
+      "Vets",
+      "for"
+    ],
+    "Pet": [
+      "Owner",
+      "PetController",
+      "PetValidator",
+      "VisitController"
+    ],
+    "Visit": [
+      "Owner",
+      "Pet",
+      "VisitController"
+    ],
+    "Owner": [
+      "OwnerController",
+      "PetController",
+      "VisitController"
+    ],
+    "PetType": [
+      "Pet",
+      "PetController",
+      "PetTypeFormatter"
+    ],
+    "PetValidator": [
+      "PetController"
+    ],
+    "Specialty": [
+      "Vet"
+    ],
+    "Vets": [
+      "VetController"
+    ]
+  },
+  "all_classes": [
+    "CacheConfiguration",
+    "CrashController",
+    "Owner",
+    "OwnerController",
+    "Pet",
+    "PetClinicApplication",
+    "PetClinicRuntimeHints",
+    "PetController",
+    "PetType",
+    "PetTypeFormatter",
+    "PetValidator",
+    "Specialty",
+    "Vet",
+    "VetController",
+    "Vets",
+    "Visit",
+    "VisitController",
+    "WebConfiguration",
+    "WelcomeController",
+    "for",
+    "public"
+  ]
+}

@@ -1,0 +1,28 @@
+PETCLINIC CLASS DEPENDENCY MAP:
+
+Owner depends on: Pet, Visit
+OwnerController depends on: Owner
+Pet depends on: PetType, Visit
+PetClinicApplication depends on: PetClinicRuntimeHints
+PetClinicRuntimeHints depends on: Vet
+PetController depends on: Owner, Pet, PetType, PetValidator
+PetTypeFormatter depends on: PetType
+PetValidator depends on: Pet
+Specialty depends on: Vet
+Vet depends on: Specialty
+VetController depends on: Vet, Vets
+Vets depends on: Vet
+VisitController depends on: Owner, Pet, Visit
+for depends on: Vet
+
+REVERSE MAP (who uses each class):
+
+Owner is used by: OwnerController, PetController, VisitController
+Pet is used by: Owner, PetController, PetValidator, VisitController
+PetClinicRuntimeHints is used by: PetClinicApplication
+PetType is used by: Pet, PetController, PetTypeFormatter
+PetValidator is used by: PetController
+Specialty is used by: Vet
+Vet is used by: PetClinicRuntimeHints, Specialty, VetController, Vets, for
+Vets is used by: VetController
+Visit is used by: Owner, Pet, VisitController

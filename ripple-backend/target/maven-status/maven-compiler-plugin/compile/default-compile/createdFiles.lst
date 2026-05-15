@@ -1,0 +1,5 @@
+com/ripple/backend/AnalyzeRequest.class
+com/ripple/backend/RippleBackendApplication.class
+com/ripple/backend/RippleResponse.class
+com/ripple/backend/AffectedFile.class
+com/ripple/backend/AnalyzeController.class

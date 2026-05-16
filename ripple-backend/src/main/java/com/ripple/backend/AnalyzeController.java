@@ -1,5 +1,6 @@
 package com.ripple.backend;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -8,26 +9,50 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class AnalyzeController {
 
+    private final BobService bobService;
+    private final ObjectMapper mapper = new ObjectMapper();
+
+    public AnalyzeController(BobService bobService) {
+        this.bobService = bobService;
+    }
+
     @PostMapping("/analyze")
-    public RippleResponse analyze(@RequestBody AnalyzeRequest req) {
-        // Mock data for now — Bob integration comes in Phase 2
-        List<AffectedFile> affected = List.of(
-            new AffectedFile("OwnerRepository.java", "Queries reference lastName field", "HIGH"),
-            new AffectedFile("OwnerController.java", "Uses Owner.getLastName()", "HIGH"),
-            new AffectedFile("OwnerValidator.java", "Validates lastName not empty", "MEDIUM"),
-            new AffectedFile("addOwnerForm.html", "Template renders owner.lastName", "MEDIUM"),
-            new AffectedFile("findOwners.html", "Search form uses lastName", "LOW"),
-            new AffectedFile("OwnerTests.java", "Tests assert on lastName field", "HIGH")
-        );
-        return new RippleResponse(
+    public RippleResponse analyze(@RequestBody AnalyzeRequest req) throws Exception {
+
+        String raw = bobService.analyze(
             req.getChangedFile(),
-            affected.size() + " files affected across 3 modules",
-            affected
+            req.getChangeDescription()
         );
+
+        try {
+            // Bob wraps output between ---output--- markers, extract the last one
+            String marker = "---output---";
+            int firstMarker = raw.indexOf(marker);
+            int secondMarker = raw.indexOf(marker, firstMarker + marker.length());
+
+            if (firstMarker >= 0 && secondMarker >= 0) {
+                String between = raw.substring(firstMarker + marker.length(), secondMarker).trim();
+                int start = between.indexOf('{');
+                int end = between.lastIndexOf('}') + 1;
+                if (start >= 0 && end > 0) {
+                    return mapper.readValue(between.substring(start, end), RippleResponse.class);
+                }
+            }
+
+            // Fallback: just find JSON anywhere in output
+            int start = raw.indexOf('{');
+            int end = raw.lastIndexOf('}') + 1;
+            if (start >= 0 && end > 0) {
+                return mapper.readValue(raw.substring(start, end), RippleResponse.class);
+            }
+
+        } catch (Exception e) {
+            System.out.println("Parse error: " + e.getMessage());
+        }
+
+        return new RippleResponse(req.getChangedFile(), "Analysis failed", List.of());
     }
 
     @GetMapping("/health")
-    public String health() {
-        return "Ripple backend is running";
-    }
+    public String health() { return "Ripple backend running"; }
 }

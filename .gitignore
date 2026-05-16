@@ -1,0 +1,4 @@
+/bob-AI/.env
+/bob-AI/__pycache__/
+*.pyc
+*.diff

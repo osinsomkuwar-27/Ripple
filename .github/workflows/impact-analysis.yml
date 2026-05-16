@@ -38,6 +38,7 @@ jobs:
           CHANGED=$(tr '\n' ',' < changed_files.txt)
           INTENT="${{ github.event.pull_request.title }}"
 
+          set +e
           bob --auth-method api-key -p \
           "You are an impact analyzer for a Java codebase.
           A developer intends to make this change: ${INTENT}
@@ -64,9 +65,13 @@ jobs:
             \"medium_risk_count\": 0,
             \"low_risk_count\": 0
           }" > bob_raw_output.txt 2>&1
+          BOB_EXIT=$?
+          set -e
 
           echo "=== Raw Bob output ==="
           cat bob_raw_output.txt
+
+          exit $BOB_EXIT
 
       - name: Parse Bob output to clean JSON
         run: node scripts/parse_bob_output.js bob_raw_output.txt result.json

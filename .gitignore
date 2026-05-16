@@ -1,0 +1,7 @@
+.env
+bob_*_output.txt
+impact_result.json
+result.json
+changed_files.txt
+scenario*_clean.json
+scenario*.json

@@ -21,7 +21,7 @@ jobs:
         run: |
           curl -fsSL https://bob.ibm.com/download/bobshell.sh -o bobshell.sh
           chmod +x bobshell.sh
-          yes | ./bobshell.sh
+          ./bobshell.sh --pm npm
           echo "$HOME/.npm-global/bin" >> $GITHUB_PATH
           bob --version
 

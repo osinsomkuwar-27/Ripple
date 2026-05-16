@@ -5,3 +5,6 @@ result.json
 changed_files.txt
 scenario*_clean.json
 scenario*.json
+# Bob Shell
+.bob/
+

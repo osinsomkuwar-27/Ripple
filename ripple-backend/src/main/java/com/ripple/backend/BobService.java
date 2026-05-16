@@ -15,21 +15,35 @@ public class BobService {
     public String analyze(String changedFile, String changeDescription) throws Exception {
 
         String prompt = "You are a code impact analyzer for this Spring PetClinic Java project. "
-            + "The file " + changedFile + " is being changed: " + changeDescription + ". "
-            + "Analyze which other files in this project will be affected by this change. "
-            + "Search the codebase for all references and dependencies. "
-            + "Return ONLY valid JSON in exactly this format, no explanation, no markdown: "
-            + "{\"changedFile\":\"" + changedFile + "\","
-            + "\"summary\":\"N files affected across M modules\","
-            + "\"affectedFiles\":["
-            + "{\"file\":\"FileName.java\",\"reason\":\"why affected\",\"risk\":\"HIGH\"}"
-            + "]}";
+        + "The file " + changedFile + " is being changed: " + changeDescription + ". "
+        + "Analyze which other files in this project will be affected by this change. "
+        + "CRITICAL: Return ONLY a single JSON object — NOT an array. "
+        + "Use lowercase for risk_tier values. "
+        + "Include risk_score as a number from 0-100 for each affected file. "
+        + "Limit likely_broken_lines to maximum 5 specific line numbers. "
+        + "You MUST include all these top-level fields: intent, affected_files, total_affected, high_risk_count, medium_risk_count, low_risk_count.\n"
+        + "{\n"
+        + "  \"intent\": \"" + changeDescription + "\",\n"
+        + "  \"affected_files\": [\n"
+        + "    {\n"
+        + "      \"file_path\": \"src/path/to/File.java\",\n"
+        + "      \"risk_tier\": \"high\",\n"
+        + "      \"risk_score\": 85,\n"
+        + "      \"reason\": \"why this file is affected\",\n"
+        + "      \"likely_broken_lines\": [42, 87]\n"
+        + "    }\n"
+        + "  ],\n"
+        + "  \"total_affected\": 1,\n"
+        + "  \"high_risk_count\": 1,\n"
+        + "  \"medium_risk_count\": 0,\n"
+        + "  \"low_risk_count\": 0\n"
+        + "}";
 
         ProcessBuilder pb = new ProcessBuilder(
-            "bob",
+            "cmd.exe", "/c", "bob",
             "--accept-license",
             "--auth-method", "api-key",
-            "-p", prompt
+            prompt
         );
 
         pb.directory(new File(config.getRepoPath()));

@@ -50,7 +50,7 @@ public class AnalyzeController {
             System.out.println("Parse error: " + e.getMessage());
         }
 
-        return new RippleResponse(req.getChangedFile(), "Analysis failed", List.of());
+        return new RippleResponse(req.getChangeDescription(), List.of(), 0, 0, 0, 0);
     }
 
     @GetMapping("/health")

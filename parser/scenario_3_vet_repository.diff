@@ -1,0 +1,11 @@
+--- a/src/main/java/org/springframework/samples/petclinic/vet/VetRepository.java
++++ b/src/main/java/org/springframework/samples/petclinic/vet/VetRepository.java
+@@ -43,7 +43,7 @@
+ 	 */
+ 	@Transactional(readOnly = true)
+ 	@Cacheable("vets")
+-    Collection<Vet> findAll() throws DataAccessException;
++    Collection<Vet> findBySpecialty(String specialty) throws DataAccessException;
+ 
+ 	/**
+ 	 * Retrieve all <code>Vet</code>s from data store in Pages

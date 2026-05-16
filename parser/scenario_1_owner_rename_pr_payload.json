@@ -1,0 +1,11 @@
+{
+  "pr_number": 42,
+  "pr_title": "Rename address field to streetAddress in Owner.java",
+  "base_branch": "main",
+  "head_branch": "feature/scenario_1_owner_rename",
+  "changed_files": [
+    "src/main/java/org/springframework/samples/petclinic/owner/Owner.java"
+  ],
+  "diff_file": "scenario_1_owner_rename.diff",
+  "repo": "spring-petclinic"
+}

@@ -1,0 +1,11 @@
+--- a/src/main/java/org/springframework/samples/petclinic/owner/Visit.java
++++ b/src/main/java/org/springframework/samples/petclinic/owner/Visit.java
+@@ -37,7 +37,7 @@
+ 
+ 	@Column(name = "visit_date")
+ 	@DateTimeFormat(pattern = "yyyy-MM-dd")
+-    private LocalDate date;
++    private LocalDate visitDate;
+ 
+ 	@NotBlank
+ 	private String description;

@@ -1,0 +1,11 @@
+{
+  "pr_number": 42,
+  "pr_title": "Rename date field to visitDate in Visit.java",
+  "base_branch": "main",
+  "head_branch": "feature/scenario_2_visit_field",
+  "changed_files": [
+    "src/main/java/org/springframework/samples/petclinic/owner/Visit.java"
+  ],
+  "diff_file": "scenario_2_visit_field.diff",
+  "repo": "spring-petclinic"
+}

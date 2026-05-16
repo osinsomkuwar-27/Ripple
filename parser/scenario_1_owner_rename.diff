@@ -1,0 +1,11 @@
+--- a/src/main/java/org/springframework/samples/petclinic/owner/Owner.java
++++ b/src/main/java/org/springframework/samples/petclinic/owner/Owner.java
+@@ -50,7 +50,7 @@
+ 
+ 	@Column
+ 	@NotBlank
+-    private String address;
++    private String streetAddress;
+ 
+ 	@Column
+ 	@NotBlank

@@ -16,7 +16,7 @@ import {
   IconChevronRight,
   IconActivity,
 } from "@tabler/icons-react";
-import { mockFiles, riskColor, type ImpactFile, type Risk } from "@/lib/mockData";
+import {riskColor, type ImpactFile, type Risk } from "@/lib/mockData";
 import { RippleGraph } from "@/components/RippleGraph";
 import { RiskBadge } from "@/components/RiskBadge";
 import logoRipple from "@/assets/logo ripple.png";
@@ -56,7 +56,7 @@ function AppShell() {
   const [filter, setFilter] = useState<Filter>("all");
   const [graphSeed, setGraphSeed] = useState(0);
   const [changedFile, setChangedFile] = useState("");
-  const [files, setFiles] = useState(mockFiles);
+  const [files, setFiles] = useState<ImpactFile[]>([]);
 
   const connectRepo = (url?: string) => {
     const target = (url ?? repoUrl).trim();

@@ -39,7 +39,7 @@ jobs:
           INTENT="${{ github.event.pull_request.title }}"
 
           set +e
-          bob --auth-method api-key -p \
+          bob --accept-license --auth-method api-key -p \
           "You are an impact analyzer for a Java codebase.
           A developer intends to make this change: ${INTENT}
           The directly changed files are: ${CHANGED}

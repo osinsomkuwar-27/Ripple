@@ -200,11 +200,11 @@ Add `BOBSHELL_API_KEY` to your GitHub repository secrets to enable this.
 
 | Role | Name | Responsibility |
 |------|------|----------------|
-| Tech Lead | P1 | IBM Bob workspace, prompt engineering |
-| Backend Lead | P2 | Spring Boot API, Bob Shell integration |
-| Frontend Lead | P3 | React ripple map visualization |
-| Data / Parser | P4 | Java dependency graph, PetClinic analysis |
-| Integrations | P5 | GitHub Action, CI/CD pipeline |
+| Tech Lead | Kshitij | IBM Bob workspace, prompt engineering |
+| Backend Lead | Osin | Spring Boot API, Bob Shell integration |
+| Frontend Lead | Shreeja | React ripple map visualization |
+| Data / Parser | Bhargavi | Java dependency graph, PetClinic analysis |
+| Integrations | Tanishka | GitHub Action, CI/CD pipeline |
 | Pitch + Docs | P6 | Demo script, pitch deck, submission |
 
 ---

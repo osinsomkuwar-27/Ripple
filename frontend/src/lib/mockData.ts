@@ -181,3 +181,23 @@ export const riskColor = (r: Risk) =>
       : r === "low"
         ? "var(--risk-low)"
         : "var(--origin)";
+export function transformApiResponse(apiData: any): ImpactFile[] {
+  return apiData.affected_files.map((f: any) => ({
+    id: f.file_path,
+    path: f.file_path,
+    shortName: f.file_path.split("/").pop() ?? f.file_path,
+    risk: f.risk_tier === "high" ? "high" : f.risk_tier === "medium" ? "med" : "low",
+    score: f.risk_score,
+    dependents: f.likely_broken_lines?.length ?? 0,
+    cascade: [f.file_path.split("/").pop()],
+    lineRefs: (f.likely_broken_lines ?? []).map((line: number) => ({
+      line,
+      snippet: `line ${line}`,
+      verified: false,
+      kind: "type-ref" as const,
+    })),
+    reasoning: f.reason ?? "",
+    breakingTests: [],
+    suggestedTests: [],
+  }));
+}

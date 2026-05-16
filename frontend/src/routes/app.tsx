@@ -1,3 +1,5 @@
+import { analyzeRepo } from "@/lib/api";
+import { transformApiResponse } from "@/lib/mockData";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -53,6 +55,8 @@ function AppShell() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [graphSeed, setGraphSeed] = useState(0);
+  const [changedFile, setChangedFile] = useState("");
+  const [files, setFiles] = useState(mockFiles);
 
   const connectRepo = (url?: string) => {
     const target = (url ?? repoUrl).trim();
@@ -61,6 +65,7 @@ function AppShell() {
     setRepo("connecting");
     setTimeout(() => setRepo("connected"), 1400);
   };
+
   const disconnectRepo = () => {
     setRepo("disconnected");
     setRepoUrl("");
@@ -68,10 +73,12 @@ function AppShell() {
     setStepIndex(-1);
     setSelectedId(null);
   };
+
   const repoName = repoUrl
     .replace(/^https?:\/\/github\.com\//, "")
     .replace(/\.git$/, "")
     .replace(/\/$/, "") || "your-repo";
+
   const [hasRun, setHasRun] = useState(false);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -80,36 +87,42 @@ function AppShell() {
 
   useEffect(() => () => timersRef.current.forEach(clearTimeout), []);
 
-  const runAnalysis = () => {
+  const runAnalysis = async () => {
     if (!canAnalyze) return;
     setPhase("running");
     setStepIndex(0);
     setSelectedId(null);
     setGraphSeed((seed) => seed + 1);
-    timersRef.current.forEach(clearTimeout);
-    timersRef.current = [];
-    PIPELINE_STEPS.forEach((_, i) => {
-      const t = setTimeout(
-        () => {
-          setStepIndex(i + 1);
-          if (i === PIPELINE_STEPS.length - 1) {
-            setPhase("done");
-            setHasRun(true);
-          }
-        },
-        (i + 1) * 650,
-      );
-      timersRef.current.push(t);
-    });
+
+    try {
+      setStepIndex(1);
+      await new Promise((r) => setTimeout(r, 500));
+      setStepIndex(2);
+      const data = await analyzeRepo({
+        changedFile,
+        changeDescription: intent,
+      });
+      setStepIndex(3);
+      await new Promise((r) => setTimeout(r, 400));
+      setStepIndex(4);
+      const transformed = transformApiResponse(data);
+      setFiles(transformed);
+      setPhase("done");
+      setHasRun(true);
+    } catch (err) {
+      setPhase("idle");
+      setStepIndex(-1);
+      alert("Analysis failed — is Osin's backend running?");
+    }
   };
 
   const selectedFile = useMemo(
-    () => mockFiles.find((f) => f.id === selectedId) ?? null,
-    [selectedId],
+    () => files.find((f) => f.id === selectedId) ?? null,
+    [selectedId, files],
   );
 
   const summary = useMemo(() => {
-    const visible = mockFiles.filter((f) => f.risk !== "origin");
+    const visible = files.filter((f) => f.risk !== "origin");
     return {
       files: visible.length,
       lineRefs: visible.reduce((s, f) => s + f.lineRefs.length, 0),
@@ -120,7 +133,7 @@ function AppShell() {
           100,
       ),
     };
-  }, []);
+  }, [files]);
 
   return (
     <div className="flex h-screen flex-col" style={{ background: "var(--bg)" }}>
@@ -185,13 +198,28 @@ function AppShell() {
             done={wordCount >= 10}
             disabled={repo !== "connected"}
           />
+
+          {/* Changed file input — NEW */}
+          <input
+            value={changedFile}
+            onChange={(e) => setChangedFile(e.target.value)}
+            disabled={repo !== "connected"}
+            placeholder="Changed file e.g. Owner.java"
+            className="w-full rounded-md border px-2.5 py-2 font-mono text-[12px] outline-none focus:border-[var(--accent)] disabled:opacity-50"
+            style={{
+              background: "var(--bg)",
+              borderColor: "var(--border)",
+              color: "var(--text)",
+            }}
+          />
+
           <textarea
             value={intent}
             onChange={(e) => setIntent(e.target.value)}
             disabled={repo !== "connected"}
             placeholder={
               repo === "connected"
-                ? "e.g. Rename the Owner class to Customer everywhere it’s used."
+                ? "e.g. Rename the Owner class to Customer everywhere it's used."
                 : "Connect a repo first…"
             }
             rows={5}
@@ -289,8 +317,7 @@ function AppShell() {
                   onClick={() => setFilter(f)}
                   className="rounded-md border px-2.5 py-1 text-[11.5px] font-medium uppercase tracking-wider transition-colors"
                   style={{
-                    background:
-                      filter === f ? "var(--accent)" : "var(--surface-2)",
+                    background: filter === f ? "var(--accent)" : "var(--surface-2)",
                     borderColor: filter === f ? "var(--accent)" : "var(--border)",
                     color: filter === f ? "white" : "var(--text-2)",
                   }}
@@ -306,9 +333,7 @@ function AppShell() {
           </div>
 
           <div className="relative flex-1 overflow-hidden" style={{ background: "var(--bg)" }}>
-            {!hasRun && phase !== "running" && (
-              <EmptyGraphState />
-            )}
+            {!hasRun && phase !== "running" && <EmptyGraphState />}
             {phase === "running" && <RunningGraphState step={stepIndex} />}
             {hasRun && (
               <RippleGraph
@@ -317,6 +342,7 @@ function AppShell() {
                 onSelect={setSelectedId}
                 filter={filter}
                 seed={graphSeed}
+                files={files}
               />
             )}
           </div>

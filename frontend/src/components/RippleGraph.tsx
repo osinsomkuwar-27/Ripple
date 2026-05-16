@@ -7,6 +7,7 @@ interface Props {
   filter: "all" | "high" | "med" | "low";
   preview?: boolean;
   seed?: number;
+  files?: ImpactFile[];
 }
 
 interface Pos {
@@ -74,8 +75,9 @@ function radius(f: ImpactFile) {
   return 10 + Math.min(14, f.dependents * 1.6);
 }
 
-export function RippleGraph({ selectedId, onSelect, filter, preview, seed = 1 }: Props) {
-  const positions = useMemo(() => layout(mockFiles, seed), [seed]);
+export function RippleGraph({ selectedId, onSelect, filter, preview, seed = 1, files: filesProp }: Props) {
+  const files = filesProp ?? mockFiles;
+  const positions = useMemo(() => layout(files, seed), [files, seed]);
 
   const visibleIds = useMemo(() => {
     if (filter === "all") return new Set(mockFiles.map((f) => f.id));

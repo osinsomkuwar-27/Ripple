@@ -425,7 +425,7 @@ function Features() {
 }
 
 function Compare() {
-  const cols = ["Cross-Repo", "Cursor", "SonarQube", "IDE Find Usages"];
+  const cols = ["Ripple", "Cursor", "SonarQube", "IDE Find Usages"];
   const rows: Array<[string, (boolean | string)[]]> = [
     ["Intent-driven ripple tracing", [true, false, false, false]],
     ["Exact line-level output", [true, false, "file", "call sites"]],

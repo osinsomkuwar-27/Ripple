@@ -43,7 +43,7 @@ public class BobService {
             "cmd.exe", "/c", "bob",
             "--accept-license",
             "--auth-method", "api-key",
-            prompt
+            "-p", prompt
         );
 
         pb.directory(new File(config.getRepoPath()));

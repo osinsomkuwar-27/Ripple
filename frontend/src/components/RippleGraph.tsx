@@ -29,6 +29,7 @@ function mulberry32(seed: number) {
 }
 
 function layout(files: ImpactFile[], seed = 1): Record<string, Pos> {
+  if (!files || !Array.isArray(files)) return {};
   const innerW = W - PADDING * 2;
   const innerH = H - PADDING * 2;
   const cx = PADDING + innerW / 2;
@@ -70,6 +71,7 @@ function layout(files: ImpactFile[], seed = 1): Record<string, Pos> {
 }
 
 function deriveEdges(files: ImpactFile[]): GraphEdge[] {
+  if (!files || !Array.isArray(files)) return [];
   const idByShortName = new Map<string, string>();
   for (const f of files) {
     idByShortName.set(f.shortName, f.id);
@@ -116,6 +118,7 @@ export function RippleGraph({ selectedId, onSelect, filter, preview, seed = 1, f
   const edges = useMemo(() => deriveEdges(files), [files]);
 
   const visibleIds = useMemo(() => {
+    if (!files || !Array.isArray(files)) return new Set<string>();
     if (filter === "all") return new Set(files.map((f) => f.id));
     return new Set(
       files.filter((f) => f.risk === filter || f.risk === "origin").map((f) => f.id),

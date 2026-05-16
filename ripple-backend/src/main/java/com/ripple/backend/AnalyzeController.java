@@ -19,35 +19,39 @@ public class AnalyzeController {
     @PostMapping("/analyze")
     public RippleResponse analyze(@RequestBody AnalyzeRequest req) throws Exception {
 
-        String raw = bobService.analyze(
-            req.getChangedFile(),
-            req.getChangeDescription()
-        );
+        String raw = bobService.analyze(req.getChangedFile(), req.getChangeDescription());
 
         try {
-            // Bob wraps output between ---output--- markers, extract the last one
             String marker = "---output---";
-            int firstMarker = raw.indexOf(marker);
-            int secondMarker = raw.indexOf(marker, firstMarker + marker.length());
+            
+            // Find ALL marker positions
+            int pos = 0;
+            java.util.List<Integer> markers = new java.util.ArrayList<>();
+            while ((pos = raw.indexOf(marker, pos)) >= 0) {
+                markers.add(pos);
+                pos += marker.length();
+            }
 
-            if (firstMarker >= 0 && secondMarker >= 0) {
-                String between = raw.substring(firstMarker + marker.length(), secondMarker).trim();
-                int start = between.indexOf('{');
-                int end = between.lastIndexOf('}') + 1;
-                if (start >= 0 && end > 0) {
-                    return mapper.readValue(between.substring(start, end), RippleResponse.class);
+            System.out.println("=== TOTAL MARKERS FOUND: " + markers.size());
+
+            // Try each consecutive pair, starting from the last pair
+            for (int i = markers.size() - 2; i >= 0; i--) {
+                int start = markers.get(i) + marker.length();
+                int end = markers.get(i + 1);
+                String between = raw.substring(start, end).trim();
+                int jsonStart = between.indexOf('{');
+                int jsonEnd = between.lastIndexOf('}') + 1;
+                if (jsonStart >= 0 && jsonEnd > 0) {
+                    try {
+                        return mapper.readValue(between.substring(jsonStart, jsonEnd), RippleResponse.class);
+                    } catch (Exception e) {
+                        System.out.println("=== SKIPPING PAIR " + i + ": " + e.getMessage());
+                    }
                 }
             }
 
-            // Fallback: just find JSON anywhere in output
-            int start = raw.indexOf('{');
-            int end = raw.lastIndexOf('}') + 1;
-            if (start >= 0 && end > 0) {
-                return mapper.readValue(raw.substring(start, end), RippleResponse.class);
-            }
-
         } catch (Exception e) {
-            System.out.println("Parse error: " + e.getMessage());
+            System.out.println("=== PARSE ERROR: " + e.getMessage());
         }
 
         return new RippleResponse(req.getChangeDescription(), List.of(), 0, 0, 0, 0);

@@ -15,6 +15,7 @@ import {
   IconBrain,
 } from "@tabler/icons-react";
 import { RippleGraph } from "@/components/RippleGraph";
+import { mockFiles } from "@/lib/mockData";
 import bobImg from "@/assets/bob.png";
 import logoRipple from "@/assets/logo ripple.png";
 
@@ -311,6 +312,7 @@ function GraphPreview() {
               filter="all"
               preview
               seed={1}
+              files={mockFiles}
             />
           </div>
           <div

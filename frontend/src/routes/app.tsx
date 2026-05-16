@@ -106,6 +106,7 @@ function AppShell() {
       await new Promise((r) => setTimeout(r, 400));
       setStepIndex(4);
       const transformed = transformApiResponse(data);
+      console.log("=== TRANSFORMED:", transformed, Array.isArray(transformed));
       setFiles(transformed);
       setPhase("done");
       setHasRun(true);
@@ -336,6 +337,8 @@ function AppShell() {
             {!hasRun && phase !== "running" && <EmptyGraphState />}
             {phase === "running" && <RunningGraphState step={stepIndex} />}
             {hasRun && (
+              <>
+              {console.log("=== FILES BEFORE RENDER:", files, Array.isArray(files))}
               <RippleGraph
                 key={filter}
                 selectedId={selectedId}
@@ -344,6 +347,7 @@ function AppShell() {
                 seed={graphSeed}
                 files={files}
               />
+              </>
             )}
           </div>
 

@@ -182,14 +182,30 @@ export const riskColor = (r: Risk) =>
         ? "var(--risk-low)"
         : "var(--origin)";
 export function transformApiResponse(apiData: any): ImpactFile[] {
-  return apiData.affected_files.map((f: any) => ({
+  if (!apiData || !Array.isArray(apiData.affected_files)) return [];
+
+  const origin: ImpactFile = {
+    id: "origin",
+    path: apiData.intent ?? "Changed file",
+    shortName: "Origin",
+    risk: "origin",
+    score: 100,
+    dependents: apiData.total_affected ?? 0,
+    cascade: ["origin"],
+    lineRefs: [],
+    reasoning: apiData.intent ?? "",
+    breakingTests: [],
+    suggestedTests: [],
+  };
+
+  const affected: ImpactFile[] = apiData.affected_files.map((f: any) => ({
     id: f.file_path,
     path: f.file_path,
-    shortName: f.file_path.split("/").pop() ?? f.file_path,
-    risk: f.risk_tier === "high" ? "high" : f.risk_tier === "medium" ? "med" : "low",
+    shortName: f.file_path.split("/").pop() || f.file_path,
+    risk: (f.risk_tier === "high" ? "high" : f.risk_tier === "medium" ? "med" : "low") as Risk,
     score: f.risk_score,
     dependents: f.likely_broken_lines?.length ?? 0,
-    cascade: [f.file_path.split("/").pop()],
+    cascade: ["origin", f.file_path.split("/").pop() || f.file_path],
     lineRefs: (f.likely_broken_lines ?? []).map((line: number) => ({
       line,
       snippet: `line ${line}`,
@@ -197,7 +213,9 @@ export function transformApiResponse(apiData: any): ImpactFile[] {
       kind: "type-ref" as const,
     })),
     reasoning: f.reason ?? "",
-    breakingTests: [],
-    suggestedTests: [],
+    breakingTests: [] as string[],
+    suggestedTests: [] as string[],
   }));
+
+  return [origin, ...affected];
 }

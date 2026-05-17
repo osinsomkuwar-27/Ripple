@@ -136,7 +136,11 @@ function AppShell() {
     } catch (err) {
       setPhase("idle");
       setStepIndex(-1);
-      alert("Analysis failed — is Osin's backend running?");
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Unknown error while running analysis.";
+      alert(`Analysis failed: ${message}`);
     }
   };
 

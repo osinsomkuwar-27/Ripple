@@ -128,6 +128,7 @@ function AppShell() {
 
   const runAnalysis = async () => {
     if (!canAnalyze) return;
+    setHasRun(false);
     setPhase("running");
     setStepIndex(0);
     setSelectedId(null);

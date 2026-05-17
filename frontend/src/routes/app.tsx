@@ -19,6 +19,7 @@ import {
 import {riskColor, type ImpactFile, type Risk } from "@/lib/mockData";
 import { RippleGraph } from "@/components/RippleGraph";
 import { RiskBadge } from "@/components/RiskBadge";
+import { useGitHubSnippet } from "@/hooks/useGitHubSnippet";
 import logoRipple from "@/assets/logo ripple.png";
 
 export const Route = createFileRoute("/app")({
@@ -370,7 +371,7 @@ function AppShell() {
           className="flex w-[320px] flex-shrink-0 flex-col overflow-hidden rounded-lg border"
           style={{ background: "var(--surface)", borderColor: "var(--border)" }}
         >
-          <FileDrawer file={selectedFile} hasRun={hasRun} />
+          <FileDrawer file={selectedFile} hasRun={hasRun} repoUrl={repoUrl} />
         </aside>
       </div>
     </div>
@@ -609,7 +610,7 @@ function RunningGraphState({ step }: { step: number }) {
   );
 }
 
-function FileDrawer({ file, hasRun }: { file: ImpactFile | null; hasRun: boolean }) {
+function FileDrawer({ file, hasRun, repoUrl}: { file: ImpactFile | null; hasRun: boolean; repoUrl: string;}) {
   if (!hasRun) {
     return (
       <DrawerEmpty
@@ -679,45 +680,7 @@ function FileDrawer({ file, hasRun }: { file: ImpactFile | null; hasRun: boolean
         </div>
 
         <PanelLabel>Line references</PanelLabel>
-        <div className="mt-1.5 flex flex-col gap-2">
-          {file.lineRefs.map((ref, i) => (
-            <div
-              key={i}
-              className="rounded-md border"
-              style={{ background: "var(--surface)", borderColor: "var(--border)" }}
-            >
-              <div
-                className="flex items-center justify-between border-b px-2.5 py-1.5 font-mono text-[10.5px]"
-                style={{ borderColor: "var(--border)", color: "var(--text-3)" }}
-              >
-                <span>
-                  line <span style={{ color: "var(--text)" }}>{ref.line}</span> · {ref.kind}
-                </span>
-                {ref.verified ? (
-                  <span
-                    className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5"
-                    style={{ background: "var(--risk-low-soft)", color: "var(--risk-low)" }}
-                  >
-                    <IconCircleCheck size={10} /> AST
-                  </span>
-                ) : (
-                  <span
-                    className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5"
-                    style={{ background: "var(--risk-med-soft)", color: "var(--risk-med)" }}
-                  >
-                    <IconAlertTriangle size={10} /> Unverified
-                  </span>
-                )}
-              </div>
-              <pre
-                className="overflow-x-auto px-2.5 py-2 font-mono text-[11px] leading-relaxed"
-                style={{ background: "var(--surface-2)", color: "var(--text)" }}
-              >
-                {ref.snippet}
-              </pre>
-            </div>
-          ))}
-        </div>
+        <LineRefsSection file={file} repoUrl={repoUrl} />
 
         <PanelLabel>Bob reasoning</PanelLabel>
         <p className="mt-1.5 text-[12.5px] leading-relaxed" style={{ color: "var(--text-2)" }}>
@@ -773,6 +736,66 @@ function FileDrawer({ file, hasRun }: { file: ImpactFile | null; hasRun: boolean
   );
 }
 
+function LineRefsSection({ file, repoUrl }: { file: ImpactFile; repoUrl: string }) {
+  const lineNumbers = file.lineRefs.map((r) => r.line);
+  const { snippets, loading } = useGitHubSnippet(repoUrl, file.path, lineNumbers);
+ 
+  return (
+    <div className="mt-1.5 flex flex-col gap-2">
+      {loading && (
+        <div
+          className="flex items-center gap-2 rounded-md px-3 py-2 text-[11px]"
+          style={{ background: "var(--surface-2)", color: "var(--text-3)" }}
+        >
+          <IconLoader2 size={11} className="animate-spin" />
+          Fetching code from GitHub…
+        </div>
+      )}
+      {file.lineRefs.map((ref, i) => {
+        const fetched = snippets[ref.line];
+        const snippet = fetched?.snippet ?? ref.snippet;
+ 
+        return (
+          <div
+            key={i}
+            className="rounded-md border overflow-hidden"
+            style={{ borderColor: "var(--border)" }}
+          >
+            <div
+              className="flex items-center justify-between border-b px-2.5 py-1.5 font-mono text-[10.5px]"
+              style={{ borderColor: "var(--border)", color: "var(--text-3)", background: "var(--surface)" }}
+            >
+              <span>
+                line <span style={{ color: "var(--text)" }}>{ref.line}</span> · {ref.kind}
+              </span>
+              {ref.verified ? (
+                <span
+                  className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5"
+                  style={{ background: "var(--risk-low-soft)", color: "var(--risk-low)" }}
+                >
+                  <IconCircleCheck size={10} /> AST
+                </span>
+              ) : (
+                <span
+                  className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5"
+                  style={{ background: "var(--risk-med-soft)", color: "var(--risk-med)" }}
+                >
+                  <IconAlertTriangle size={10} /> Unverified
+                </span>
+              )}
+            </div>
+            <pre
+              className="overflow-x-auto px-2.5 py-2 font-mono text-[10.5px] leading-relaxed"
+              style={{ background: "var(--surface-2)", color: "var(--text)", margin: 0 }}
+            >
+              {snippet}
+            </pre>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 function ExportButton({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <button

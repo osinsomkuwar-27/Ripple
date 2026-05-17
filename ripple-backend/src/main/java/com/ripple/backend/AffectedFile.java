@@ -8,10 +8,9 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AffectedFile {
 
-    @JsonProperty("file_path")
-    private String filePath;
-
+    @JsonProperty("file_path")    
     @JsonAlias("path")
+    private String filePath;
 
     private String reason;
 

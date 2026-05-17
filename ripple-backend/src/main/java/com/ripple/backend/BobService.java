@@ -39,39 +39,65 @@ public class BobService {
         + "  \"low_risk_count\": 0\n"
         + "}";
 
-        ProcessBuilder pb = new ProcessBuilder(
-            "cmd.exe", "/c", "bob",
-            "--accept-license",
-            "--auth-method", "api-key",
-            "-p", prompt
-        );
+        // Cross-platform Bob CLI execution with fallback strategy
+        String os = System.getProperty("os.name").toLowerCase();
+        System.out.println("=== OS DETECTED: " + os);
+        System.out.println("=== REPO PATH: " + config.getRepoPath());
+        System.out.println("=== API KEY starts with: " + config.getApiKey().substring(0, Math.min(20, config.getApiKey().length())));
 
+        ProcessBuilder pb;
+        String[] commands;
+        
+        if (os.contains("win")) {
+            commands = new String[]{"cmd.exe", "/c", "bob", "--accept-license", "--auth-method", "api-key", "-p", prompt};
+        } else {
+            // macOS/Linux - try direct execution first
+            commands = new String[]{"bob", "--accept-license", "--auth-method", "api-key", "-p", prompt};
+        }
+        
+        pb = new ProcessBuilder(commands);
         pb.directory(new File(config.getRepoPath()));
-
-        // Set env var explicitly
         pb.environment().put("BOBSHELL_API_KEY", config.getApiKey());
-
-        // Also inherit current environment
         pb.redirectErrorStream(true);
 
-        System.out.println("=== REPO PATH: " + config.getRepoPath());
-        System.out.println("=== API KEY starts with: " + config.getApiKey().substring(0, 20));
-
-        Process process = pb.start();
-
-        BufferedReader reader = new BufferedReader(
-            new InputStreamReader(process.getInputStream())
-        );
-
+        Process process = null;
         StringBuilder output = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            output.append(line).append("\n");
-        }
+        int exitCode = -1;
+        
+        try {
+            process = pb.start();
+            
+            BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getInputStream())
+            );
 
-        int exitCode = process.waitFor();
-        System.out.println("=== EXIT CODE: " + exitCode);
-        System.out.println("=== BOB OUTPUT: " + output);
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+
+            exitCode = process.waitFor();
+            System.out.println("=== EXIT CODE: " + exitCode);
+            System.out.println("=== BOB OUTPUT LENGTH: " + output.length());
+            
+            if (exitCode != 0) {
+                System.err.println("=== BOB FAILED WITH EXIT CODE: " + exitCode);
+                System.err.println("=== BOB ERROR OUTPUT: " + output);
+                String truncatedOutput = output.length() > 500
+                    ? output.substring(0, 500) + "..."
+                    : output.toString();
+                throw new RuntimeException(
+                    "Bob CLI failed with exit code " + exitCode + ". " +
+                    "Check Node/Bob compatibility and ensure Bob CLI is installed. " +
+                    "Output: " + truncatedOutput
+                );
+            }
+            
+        } catch (IOException e) {
+            String errorMsg = "Failed to execute Bob CLI. Ensure 'bob' is installed and in PATH. OS: " + os + ", Error: " + e.getMessage();
+            System.err.println("=== " + errorMsg);
+            throw new RuntimeException(errorMsg, e);
+        }
 
         return output.toString();
     }

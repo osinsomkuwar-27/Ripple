@@ -1,23 +1,18 @@
 package com.ripple.backend.parser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -25,6 +20,13 @@ public class JavaAstParserService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ParserAdjacency buildAdjacency(Path javaSourceBase) throws IOException {
+
+        // ── Fix: set language level to Java 21 before parsing ──────────────
+        ParserConfiguration config = new ParserConfiguration()
+                .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21);
+        StaticJavaParser.setConfiguration(config);
+        // ───────────────────────────────────────────────────────────────────
+
         List<Path> javaFiles;
         try (Stream<Path> stream = Files.walk(javaSourceBase)) {
             javaFiles = stream
@@ -38,21 +40,26 @@ public class JavaAstParserService {
         Map<Path, CompilationUnit> unitsByFile = new HashMap<>();
 
         for (Path file : javaFiles) {
-            CompilationUnit cu = StaticJavaParser.parse(file);
-            unitsByFile.put(file, cu);
+            try {
+                CompilationUnit cu = StaticJavaParser.parse(file);
+                unitsByFile.put(file, cu);
 
-            cu.findAll(ClassOrInterfaceDeclaration.class).forEach(c -> {
-                if (!c.isNestedType()) {
-                    allClasses.add(c.getNameAsString());
-                    classToFile.put(c.getNameAsString(), file);
-                }
-            });
-            cu.findAll(EnumDeclaration.class).forEach(e -> {
-                if (!e.isNestedType()) {
-                    allClasses.add(e.getNameAsString());
-                    classToFile.put(e.getNameAsString(), file);
-                }
-            });
+                cu.findAll(ClassOrInterfaceDeclaration.class).forEach(c -> {
+                    if (!c.isNestedType()) {
+                        allClasses.add(c.getNameAsString());
+                        classToFile.put(c.getNameAsString(), file);
+                    }
+                });
+                cu.findAll(EnumDeclaration.class).forEach(e -> {
+                    if (!e.isNestedType()) {
+                        allClasses.add(e.getNameAsString());
+                        classToFile.put(e.getNameAsString(), file);
+                    }
+                });
+            } catch (Exception e) {
+                // Skip files that fail to parse — don't let one bad file kill the whole run
+                System.out.println("=== AST SKIP: " + file.getFileName() + " — " + e.getMessage());
+            }
         }
 
         Map<String, Set<String>> dependencySets = new TreeMap<>();
@@ -70,14 +77,10 @@ public class JavaAstParserService {
 
             List<String> topLevelNames = new ArrayList<>();
             cu.findAll(ClassOrInterfaceDeclaration.class).forEach(c -> {
-                if (!c.isNestedType()) {
-                    topLevelNames.add(c.getNameAsString());
-                }
+                if (!c.isNestedType()) topLevelNames.add(c.getNameAsString());
             });
             cu.findAll(EnumDeclaration.class).forEach(e -> {
-                if (!e.isNestedType()) {
-                    topLevelNames.add(e.getNameAsString());
-                }
+                if (!e.isNestedType()) topLevelNames.add(e.getNameAsString());
             });
 
             Set<String> referenced = new HashSet<>();

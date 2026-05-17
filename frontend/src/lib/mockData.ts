@@ -198,24 +198,31 @@ export function transformApiResponse(apiData: any): ImpactFile[] {
     suggestedTests: [],
   };
 
-  const affected: ImpactFile[] = apiData.affected_files.map((f: any) => ({
-    id: f.file_path,
-    path: f.file_path,
-    shortName: f.file_path.split("/").pop() || f.file_path,
-    risk: (f.risk_tier === "high" ? "high" : f.risk_tier === "medium" ? "med" : "low") as Risk,
-    score: f.risk_score,
-    dependents: f.likely_broken_lines?.length ?? 0,
-    cascade: ["origin", f.file_path.split("/").pop() || f.file_path],
-    lineRefs: (f.likely_broken_lines ?? []).map((line: number) => ({
-      line,
-      snippet: `line ${line}`,
-      verified: false,
-      kind: "type-ref" as const,
-    })),
-    reasoning: f.reason ?? "",
-    breakingTests: [] as string[],
-    suggestedTests: [] as string[],
-  }));
+  const affected: ImpactFile[] = apiData.affected_files.map((f: any) => {
+    const verified: boolean = f.verified ?? false;
+    const cascadeChain: string[] = Array.isArray(f.cascade_chain) && f.cascade_chain.length > 0
+      ? ["origin", ...f.cascade_chain]
+      : ["origin", f.file_path.split("/").pop() || f.file_path];
+
+    return {
+      id: f.file_path,
+      path: f.file_path,
+      shortName: f.file_path.split("/").pop() || f.file_path,
+      risk: (f.risk_tier === "high" ? "high" : f.risk_tier === "medium" ? "med" : "low") as Risk,
+      score: f.risk_score,
+      dependents: f.likely_broken_lines?.length ?? 0,
+      cascade: cascadeChain,
+      lineRefs: (f.likely_broken_lines ?? []).map((line: number) => ({
+        line,
+        snippet: `line ${line}`,
+        verified,
+        kind: "type-ref" as const,
+      })),
+      reasoning: f.reason ?? "",
+      breakingTests: [] as string[],
+      suggestedTests: [] as string[],
+    };
+  });
 
   return [origin, ...affected];
 }

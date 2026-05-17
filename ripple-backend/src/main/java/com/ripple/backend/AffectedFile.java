@@ -21,6 +21,12 @@ public class AffectedFile {
     @JsonProperty("likely_broken_lines")
     private List<Integer> likelyBrokenLines;
 
+    @JsonProperty("verified")
+    private boolean verified = false;
+
+    @JsonProperty("cascade_chain")
+    private List<String> cascadeChain = List.of();
+
     public AffectedFile() {}
 
     public AffectedFile(String filePath, String reason, String riskTier,
@@ -46,4 +52,10 @@ public class AffectedFile {
 
     public List<Integer> getLikelyBrokenLines() { return likelyBrokenLines; }
     public void setLikelyBrokenLines(List<Integer> l) { this.likelyBrokenLines = l; }
+
+    public boolean isVerified() { return verified; }
+    public void setVerified(boolean v) { this.verified = v; }
+
+    public List<String> getCascadeChain() { return cascadeChain; }
+    public void setCascadeChain(List<String> c) { this.cascadeChain = c; }
 }

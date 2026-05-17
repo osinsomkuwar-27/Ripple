@@ -1,0 +1,133 @@
+name: Impact Analysis
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.15.0"
+      - name: Install Bob Shell
+        run: |
+          curl -fsSL https://bob.ibm.com/download/bobshell.sh -o bobshell.sh
+          chmod +x bobshell.sh
+          ./bobshell.sh --pm npm
+          echo "$HOME/.npm-global/bin" >> $GITHUB_PATH
+          bob --version
+
+      - name: Get changed files
+        run: |
+          git diff --name-only origin/${{ github.base_ref }}...HEAD > changed_files.txt
+          echo "Changed files:"
+          cat changed_files.txt
+
+      - name: Run Bob impact analysis
+        env:
+          BOBSHELL_API_KEY: ${{ secrets.BOBSHELL_API_KEY }}
+        run: |
+          CHANGED=$(tr '\n' ',' < changed_files.txt)
+          INTENT="${{ github.event.pull_request.title }}"
+
+          set +e
+          bob --accept-license --auth-method api-key -p \
+          "You are an impact analyzer for a Java codebase.
+          A developer intends to make this change: ${INTENT}
+          The directly changed files are: ${CHANGED}
+          Analyze which OTHER files in this repository will be affected.
+          For each file provide the file path, risk tier (high/medium/low),
+          risk score (0-100), reason it is affected, and which line numbers
+          are most likely to break.
+
+          Return ONLY this JSON. No prose. No explanation. No markdown.
+          {
+            \"intent\": \"string\",
+            \"affected_files\": [
+              {
+                \"file_path\": \"string\",
+                \"risk_tier\": \"high|medium|low\",
+                \"risk_score\": 0,
+                \"reason\": \"string\",
+                \"likely_broken_lines\": [47, 83]
+              }
+            ],
+            \"total_affected\": 0,
+            \"high_risk_count\": 0,
+            \"medium_risk_count\": 0,
+            \"low_risk_count\": 0
+          }" > bob_raw_output.txt 2>&1
+          BOB_EXIT=$?
+          set -e
+
+          echo "=== Raw Bob output ==="
+          cat bob_raw_output.txt
+
+          exit $BOB_EXIT
+
+      - name: Parse Bob output to clean JSON
+        run: node scripts/parse_bob_output.js bob_raw_output.txt result.json
+
+      - name: Post PR comment
+        uses: actions/github-script@v7
+        env:
+          DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
+        with:
+          script: |
+            const fs = require('fs');
+            const r = JSON.parse(fs.readFileSync('result.json', 'utf8'));
+            const changedFiles = fs.readFileSync('changed_files.txt', 'utf8')
+              .split('\n')
+              .map(s => s.trim())
+              .filter(Boolean)
+              .join(', ');
+            const baseDashboard = process.env.DASHBOARD_URL || 'http://localhost:5173/app';
+            const params = new URLSearchParams({
+              repo: `https://github.com/${context.repo.owner}/${context.repo.repo}`,
+              pr: String(context.issue.number),
+              intent: String(r.intent || context.payload.pull_request?.title || ''),
+              prTitle: String(context.payload.pull_request?.title || ''),
+              changedFile: changedFiles,
+              autoRun: '1'
+            });
+            const dashboardLink = `${baseDashboard}?${params.toString()}`;
+            const rows = r.affected_files.slice(0, 8).map(f => {
+              const icon = f.risk_tier === 'high' ? '🔴' :
+                           f.risk_tier === 'medium' ? '🟡' : '🟢';
+              const lines = f.likely_broken_lines?.length
+                ? f.likely_broken_lines.join(', ') : '—';
+              return `| \`${f.file_path}\` | ${icon} ${f.risk_tier} | ${lines} | ${f.reason} |`;
+            }).join('\n');
+            const body = [
+              '## 🔍 Impact Analysis - Powered by IBM Bob',
+              '',
+              `**${r.total_affected} files affected**  -  ` +
+              `🔴 ${r.high_risk_count} high  ·  ` +
+              `🟡 ${r.medium_risk_count} medium  ·  ` +
+              `🟢 ${r.low_risk_count} low`,
+              '',
+              '| File | Risk | Lines at risk | Reason |',
+              '|------|------|---------------|--------|',
+              rows,
+              '',
+              `> Open the dashboard for the full ripple map visualization: [Open PR #${context.issue.number} in Ripple Dashboard](${dashboardLink})`
+            ].join('\n');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });

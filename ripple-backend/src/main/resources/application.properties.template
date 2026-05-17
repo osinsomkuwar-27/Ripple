@@ -1,0 +1,3 @@
+server.port=8081
+bob.api.key=YOUR_BOB_API_KEY_HERE
+bob.repo.path=YOUR_BOB_REPO_PATH_HERE

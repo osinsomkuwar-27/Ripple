@@ -1,5 +1,6 @@
 package com.ripple.backend;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
@@ -9,6 +10,8 @@ public class AffectedFile {
 
     @JsonProperty("file_path")
     private String filePath;
+
+    @JsonAlias("path")
 
     private String reason;
 

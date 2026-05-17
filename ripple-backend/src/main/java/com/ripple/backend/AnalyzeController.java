@@ -80,6 +80,10 @@ public class AnalyzeController {
             for (AffectedFile af : response.getAffectedFiles()) {
                 // Extract simple class name from path e.g. "src/.../Owner.java" → "Owner"
                 String fileName = af.getFilePath();
+                if (fileName == null || fileName.isBlank()) {
+                    System.out.println("=== SKIPPING file with null path");
+                    continue;
+                }
                 String className = fileName
                         .substring(fileName.lastIndexOf('/') + 1)
                         .replace(".java", "");

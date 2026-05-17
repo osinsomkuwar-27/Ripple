@@ -1,6 +1,7 @@
 export interface AnalyzeRequest {
   changedFile: string;
   changeDescription: string;
+  repoUrl?: string;
 }
 
 export async function analyzeRepo(req: AnalyzeRequest) {

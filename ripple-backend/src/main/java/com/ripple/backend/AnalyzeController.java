@@ -28,8 +28,8 @@ public class AnalyzeController {
 
     @PostMapping("/analyze")
     public RippleResponse analyze(@RequestBody AnalyzeRequest req) throws Exception {
-
-        String raw = bobService.analyze(req.getChangedFile(), req.getChangeDescription());
+        String resolvedRepoPath = bobService.cloneIfNeeded(req.getRepoUrl());
+        String raw = bobService.analyze(req.getChangedFile(), req.getChangeDescription(), resolvedRepoPath);
 
         RippleResponse response = null;
 
@@ -71,7 +71,7 @@ public class AnalyzeController {
 
         // ── Step 1: AST verification ──────────────────────────────────────────
         try {
-            Path repoPath = Path.of(bobConfig.getRepoPath());
+            Path repoPath = Path.of(resolvedRepoPath);
             ParserAdjacency adjacency = astParser.buildAdjacency(repoPath);
             Set<String> realClasses = new HashSet<>(adjacency.getAllClasses());
 

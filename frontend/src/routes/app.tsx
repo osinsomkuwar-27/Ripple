@@ -142,6 +142,7 @@ function AppShell() {
       const data = await analyzeRepo({
         changedFile,
         changeDescription: intent,
+        repoUrl,
       });
       setStepIndex(3);
       await new Promise((r) => setTimeout(r, 400));

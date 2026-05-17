@@ -99,6 +99,7 @@ jobs:
               repo: `https://github.com/${context.repo.owner}/${context.repo.repo}`,
               pr: String(context.issue.number),
               intent: String(r.intent || context.payload.pull_request?.title || ''),
+              prTitle: String(context.payload.pull_request?.title || ''),
               changedFile: changedFiles,
               autoRun: '1'
             });

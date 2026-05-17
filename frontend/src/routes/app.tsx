@@ -16,7 +16,7 @@ import {
   IconChevronRight,
   IconActivity,
 } from "@tabler/icons-react";
-import {riskColor, type ImpactFile, type Risk } from "@/lib/mockData";
+import { riskColor, type ImpactFile, type Risk } from "@/lib/mockData";
 import { RippleGraph } from "@/components/RippleGraph";
 import { RiskBadge } from "@/components/RiskBadge";
 import { useGitHubSnippet } from "@/hooks/useGitHubSnippet";
@@ -60,11 +60,13 @@ function AppShell() {
   const [files, setFiles] = useState<ImpactFile[]>([]);
   const [autoRunPending, setAutoRunPending] = useState(false);
   const autoRunTriggeredRef = useRef(false);
+  const [emptyResultWarning, setEmptyResultWarning] = useState(false);
 
   useEffect(() => {
     const qs = new URLSearchParams(window.location.search);
     const repo = qs.get("repo")?.trim() ?? "";
     const intentQ = qs.get("intent")?.trim() ?? "";
+    const prTitle = qs.get("prTitle")?.trim() ?? "";
     const changedQ = qs.get("changedFile")?.trim() ?? "";
     const autoRunQ = qs.get("autoRun") === "1";
 
@@ -73,7 +75,23 @@ function AppShell() {
       setRepo("connecting");
       setTimeout(() => setRepo("connected"), 200);
     }
-    if (intentQ) setIntent(intentQ);
+
+    // Improve intent prefill quality: prefer PR title over branch-like slugs
+    let finalIntent = intentQ;
+    if (intentQ) {
+      // Check if intent looks like a branch name (e.g., "user/feature-name" or "kebab-case-slug")
+      const looksLikeBranch =
+        intentQ.includes("/") || (intentQ.includes("-") && intentQ.split(/\s+/).length === 1);
+      const isTooShort = intentQ.split(/\s+/).filter(Boolean).length < 3;
+
+      if ((looksLikeBranch || isTooShort) && prTitle) {
+        finalIntent = prTitle;
+      }
+    } else if (prTitle) {
+      finalIntent = prTitle;
+    }
+
+    if (finalIntent) setIntent(finalIntent);
     if (changedQ) setChangedFile(changedQ);
     if (autoRunQ) setAutoRunPending(true);
   }, []);
@@ -94,10 +112,11 @@ function AppShell() {
     setSelectedId(null);
   };
 
-  const repoName = repoUrl
-    .replace(/^https?:\/\/github\.com\//, "")
-    .replace(/\.git$/, "")
-    .replace(/\/$/, "") || "your-repo";
+  const repoName =
+    repoUrl
+      .replace(/^https?:\/\/github\.com\//, "")
+      .replace(/\.git$/, "")
+      .replace(/\/$/, "") || "your-repo";
 
   const [hasRun, setHasRun] = useState(false);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -109,10 +128,12 @@ function AppShell() {
 
   const runAnalysis = async () => {
     if (!canAnalyze) return;
+    setHasRun(false);
     setPhase("running");
     setStepIndex(0);
     setSelectedId(null);
     setGraphSeed((seed) => seed + 1);
+    setEmptyResultWarning(false);
 
     try {
       setStepIndex(1);
@@ -121,6 +142,7 @@ function AppShell() {
       const data = await analyzeRepo({
         changedFile,
         changeDescription: intent,
+        repoUrl,
       });
       setStepIndex(3);
       await new Promise((r) => setTimeout(r, 400));
@@ -130,10 +152,17 @@ function AppShell() {
       setFiles(transformed);
       setPhase("done");
       setHasRun(true);
+
+      // Check if backend returned empty affected_files
+      const affectedOnly = transformed.filter((f) => f.risk !== "origin");
+      if (affectedOnly.length === 0) {
+        setEmptyResultWarning(true);
+      }
     } catch (err) {
       setPhase("idle");
       setStepIndex(-1);
-      alert("Analysis failed — is Osin's backend running?");
+      console.error("Analysis failed:", err);
+      alert("Analysis failed — is the backend running on port 8081?");
     }
   };
 
@@ -272,7 +301,12 @@ function AppShell() {
             </span>
           </div>
 
-          <StepHeader n={3} title="Run the analysis" done={hasRun} disabled={!canAnalyze && !hasRun} />
+          <StepHeader
+            n={3}
+            title="Run the analysis"
+            done={hasRun}
+            disabled={!canAnalyze && !hasRun}
+          />
           <button
             onClick={runAnalysis}
             disabled={!canAnalyze}
@@ -350,11 +384,18 @@ function AppShell() {
                     color: filter === f ? "white" : "var(--text-2)",
                   }}
                 >
-                  {f === "med" ? "Medium" : f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+                  {f === "med"
+                    ? "Medium"
+                    : f === "all"
+                      ? "All"
+                      : f.charAt(0).toUpperCase() + f.slice(1)}
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-2 font-mono text-[11px]" style={{ color: "var(--text-3)" }}>
+            <div
+              className="flex items-center gap-2 font-mono text-[11px]"
+              style={{ color: "var(--text-3)" }}
+            >
               <IconActivity size={12} />
               {hasRun ? `${summary.files} nodes · ${summary.lineRefs} refs` : "awaiting analysis"}
             </div>
@@ -365,15 +406,30 @@ function AppShell() {
             {phase === "running" && <RunningGraphState step={stepIndex} />}
             {hasRun && (
               <>
-              {console.log("=== FILES BEFORE RENDER:", files, Array.isArray(files))}
-              <RippleGraph
-                key={filter}
-                selectedId={selectedId}
-                onSelect={setSelectedId}
-                filter={filter}
-                seed={graphSeed}
-                files={files}
-              />
+                {emptyResultWarning && (
+                  <div
+                    className="absolute left-1/2 top-4 z-10 flex -translate-x-1/2 items-center gap-2 rounded-lg border px-4 py-2.5 shadow-lg"
+                    style={{
+                      background: "var(--surface)",
+                      borderColor: "var(--risk-med)",
+                      color: "var(--text)",
+                    }}
+                  >
+                    <IconAlertTriangle size={16} style={{ color: "var(--risk-med)" }} />
+                    <span className="text-[12.5px] font-medium">
+                      No impacted files returned from analysis
+                    </span>
+                  </div>
+                )}
+                {console.log("=== FILES BEFORE RENDER:", files, Array.isArray(files))}
+                <RippleGraph
+                  key={filter}
+                  selectedId={selectedId}
+                  onSelect={setSelectedId}
+                  filter={filter}
+                  seed={graphSeed}
+                  files={files}
+                />
               </>
             )}
           </div>
@@ -420,7 +476,10 @@ function TopBar() {
           <span className="nav-brand-name">Ripple</span>
         </span>
       </Link>
-      <div className="flex items-center gap-3 font-mono text-[10.5px]" style={{ color: "var(--text-3)" }}>
+      <div
+        className="flex items-center gap-3 font-mono text-[10.5px]"
+        style={{ color: "var(--text-3)" }}
+      >
         <span>session a3f29c · {new Date().toISOString().slice(0, 16).replace("T", " ")}</span>
       </div>
     </div>
@@ -450,10 +509,7 @@ function StepHeader({
   disabled?: boolean;
 }) {
   return (
-    <div
-      className="mt-1 flex items-center gap-2"
-      style={{ opacity: disabled ? 0.45 : 1 }}
-    >
+    <div className="mt-1 flex items-center gap-2" style={{ opacity: disabled ? 0.45 : 1 }}>
       <span
         className="flex h-5 w-5 items-center justify-center rounded-full font-mono text-[10.5px] font-medium"
         style={{
@@ -470,13 +526,7 @@ function StepHeader({
   );
 }
 
-function ConnectedRepoCard({
-  name,
-  onDisconnect,
-}: {
-  name: string;
-  onDisconnect: () => void;
-}) {
+function ConnectedRepoCard({ name, onDisconnect }: { name: string; onDisconnect: () => void }) {
   return (
     <div
       className="flex items-center gap-2 rounded-md border px-2.5 py-2"
@@ -522,7 +572,10 @@ function Stat({
       <div className="font-mono text-[21px] font-medium leading-none" style={{ color }}>
         {value}
       </div>
-      <div className="mt-1 text-[10.5px] uppercase tracking-wider" style={{ color: "var(--text-3)" }}>
+      <div
+        className="mt-1 text-[10.5px] uppercase tracking-wider"
+        style={{ color: "var(--text-3)" }}
+      >
         {label}
       </div>
     </div>
@@ -636,7 +689,15 @@ function RunningGraphState({ step }: { step: number }) {
   );
 }
 
-function FileDrawer({ file, hasRun, repoUrl}: { file: ImpactFile | null; hasRun: boolean; repoUrl: string;}) {
+function FileDrawer({
+  file,
+  hasRun,
+  repoUrl,
+}: {
+  file: ImpactFile | null;
+  hasRun: boolean;
+  repoUrl: string;
+}) {
   if (!hasRun) {
     return (
       <DrawerEmpty
@@ -676,10 +737,16 @@ function FileDrawer({ file, hasRun, repoUrl}: { file: ImpactFile | null; hasRun:
       <div className="flex-1 overflow-y-auto px-3.5 py-3">
         <PanelLabel>Risk score</PanelLabel>
         <div className="mt-1.5 flex items-center gap-3">
-          <span className="font-mono text-[20px] font-medium" style={{ color: riskColor(file.risk) }}>
+          <span
+            className="font-mono text-[20px] font-medium"
+            style={{ color: riskColor(file.risk) }}
+          >
             {file.score}
           </span>
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
+          <div
+            className="h-1.5 flex-1 overflow-hidden rounded-full"
+            style={{ background: "var(--surface-2)" }}
+          >
             <div
               className="score-fill h-full"
               style={{ width: `${file.score}%`, background: riskColor(file.risk) }}
@@ -693,7 +760,11 @@ function FileDrawer({ file, hasRun, repoUrl}: { file: ImpactFile | null; hasRun:
         <PanelLabel>Cascade chain</PanelLabel>
         <div className="mt-1.5 flex flex-wrap items-center gap-1 font-mono text-[11px]">
           {file.cascade.map((c, i) => (
-            <span key={i} className="inline-flex items-center gap-1" style={{ color: "var(--text-2)" }}>
+            <span
+              key={i}
+              className="inline-flex items-center gap-1"
+              style={{ color: "var(--text-2)" }}
+            >
               {i > 0 && <IconChevronRight size={10} style={{ color: "var(--text-3)" }} />}
               <span
                 className="rounded-sm px-1.5 py-0.5"
@@ -723,7 +794,11 @@ function FileDrawer({ file, hasRun, repoUrl}: { file: ImpactFile | null; hasRun:
                   className="flex items-start gap-2 font-mono text-[11px]"
                   style={{ color: "var(--text)" }}
                 >
-                  <IconX size={12} className="mt-0.5 flex-shrink-0" style={{ color: "var(--risk-high)" }} />
+                  <IconX
+                    size={12}
+                    className="mt-0.5 flex-shrink-0"
+                    style={{ color: "var(--risk-high)" }}
+                  />
                   {t}
                 </li>
               ))}
@@ -741,7 +816,11 @@ function FileDrawer({ file, hasRun, repoUrl}: { file: ImpactFile | null; hasRun:
                   className="flex items-start gap-2 text-[12px]"
                   style={{ color: "var(--text-2)" }}
                 >
-                  <IconCheck size={12} className="mt-0.5 flex-shrink-0" style={{ color: "var(--risk-low)" }} />
+                  <IconCheck
+                    size={12}
+                    className="mt-0.5 flex-shrink-0"
+                    style={{ color: "var(--risk-low)" }}
+                  />
                   {t}
                 </li>
               ))}
@@ -765,7 +844,7 @@ function FileDrawer({ file, hasRun, repoUrl}: { file: ImpactFile | null; hasRun:
 function LineRefsSection({ file, repoUrl }: { file: ImpactFile; repoUrl: string }) {
   const lineNumbers = file.lineRefs.map((r) => r.line);
   const { snippets, loading } = useGitHubSnippet(repoUrl, file.path, lineNumbers);
- 
+
   return (
     <div className="mt-1.5 flex flex-col gap-2">
       {loading && (
@@ -780,7 +859,7 @@ function LineRefsSection({ file, repoUrl }: { file: ImpactFile; repoUrl: string 
       {file.lineRefs.map((ref, i) => {
         const fetched = snippets[ref.line];
         const snippet = fetched?.snippet ?? ref.snippet;
- 
+
         return (
           <div
             key={i}
@@ -789,7 +868,11 @@ function LineRefsSection({ file, repoUrl }: { file: ImpactFile; repoUrl: string 
           >
             <div
               className="flex items-center justify-between border-b px-2.5 py-1.5 font-mono text-[10.5px]"
-              style={{ borderColor: "var(--border)", color: "var(--text-3)", background: "var(--surface)" }}
+              style={{
+                borderColor: "var(--border)",
+                color: "var(--text-3)",
+                background: "var(--surface)",
+              }}
             >
               <span>
                 line <span style={{ color: "var(--text)" }}>{ref.line}</span> · {ref.kind}

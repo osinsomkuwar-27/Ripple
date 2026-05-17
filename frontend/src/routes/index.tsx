@@ -60,10 +60,7 @@ function Navbar() {
             <a href="#compare" style={{ color: "var(--text-2)" }}>Compare</a>
             <a href="#proof" style={{ color: "var(--text-2)" }}>Proof</a>
           </nav>
-          <Link
-            to="/app"
-            className="nav-cta"
-          >
+          <Link to="/app" className="nav-cta">
             Get started <IconArrowRight size={14} />
           </Link>
         </div>
@@ -91,70 +88,95 @@ function WordSequence({ text, delayStart = 0 }: { text: string; delayStart?: num
   );
 }
 
+function RunningHeadline() {
+  const headlineItems = [
+    { label: "~3H → <60S", className: "headline-speed" },
+    { label: "17 FILES TRACED", className: "headline-files" },
+    { label: "90%+ AST-VERIFIED", className: "headline-verified" },
+  ];
+  const headlineRepeats = 12;
+
+  const renderGroup = (keyPrefix: string, ariaHidden?: boolean) => (
+    <div className="running-headline__group" aria-hidden={ariaHidden}>
+      {Array.from({ length: headlineRepeats }).flatMap((_, repeatIndex) =>
+        headlineItems.flatMap((item, itemIndex) => [
+          <span
+            key={`${keyPrefix}-${repeatIndex}-${itemIndex}`}
+            className={`headline-chunk ${item.className}`}
+          >
+            {item.label}
+          </span>,
+          <span key={`${keyPrefix}-dot-${repeatIndex}-${itemIndex}`} className="headline-dot">
+            •
+          </span>,
+        ])
+      )}
+    </div>
+  );
+
+  return (
+    <div className="running-headline" role="status" aria-live="polite">
+      <div className="running-headline__track">
+        {renderGroup("headline")}
+        {renderGroup("headline-ghost", true)}
+      </div>
+    </div>
+  );
+}
+
 function Hero() {
   return (
-    <section
-      id="home"
-      className="section-reveal px-6 pb-20 pt-20 sm:pt-28"
-      style={{ ["--section-delay" as never]: "0s" }}
-    >
-      <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="text-center lg:text-left">
-          <h1
-            className="hero-italic text-balance text-[44px] font-medium leading-[1.05] tracking-tight sm:text-[56px]"
-            style={{ color: "var(--text)" }}
-          >
-            <WordSequence text="Understand the ripple effects of any code change —" />{" "}
-            <span style={{ color: "var(--text-2)" }}>
-              <WordSequence text="before you make it." delayStart={0.6} />
-            </span>
-          </h1>
-
-          <p className="mx-auto mt-6 max-w-2xl text-[18px] lg:mx-0" style={{ color: "#000000" }}>
-            <WordSequence
-              text="AI-powered impact analysis that pins every affected file to the exact line number, grounded by JavaParser AST so the line numbers are real — not hallucinated."
-              delayStart={0.9}
-            />
-          </p>
-
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-            <Link
-              to="/app"
-              className="btn-primary inline-flex items-center gap-2 rounded-lg px-7 py-3.5 text-[14px] font-medium text-white transition-opacity hover:opacity-90"
-              style={{ background: "var(--accent)" }}
+    <>
+      <section
+        id="home"
+        className="section-reveal px-6 pb-10 pt-20 sm:pt-28"
+        style={{ ["--section-delay" as never]: "0s" }}
+      >
+        <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="text-center lg:text-left">
+            <h1
+              className="hero-italic text-balance text-[44px] font-light leading-[1.05] tracking-tight sm:text-[56px]"
+              style={{ color: "var(--text)" }}
             >
-              Analyze your repo <IconArrowRight size={16} />
-            </Link>
-            <Link
-              to="/app"
-              className="btn-secondary inline-flex items-center gap-2 rounded-lg border px-7 py-3.5 text-[14px] font-medium transition-colors hover:bg-[var(--surface-2)]"
-              style={{ borderColor: "#000000", color: "var(--text)" }}
-            >
-              See a demo
-            </Link>
-          </div>
-
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-2 font-mono text-[12px] lg:justify-start">
-            {[
-              "~3h → <60s",
-              "17 files traced",
-              "90%+ AST-verified",
-            ].map((t, i) => (
-              <span
-                key={t}
-                className={`metric-pill metric-pill-${i} rounded-md border`}
-              >
-                {t}
+              <WordSequence text="Understand the ripple effects of any code change —" />{" "}
+              <span className="hero-emphasis">
+                <WordSequence text="before you make it." delayStart={0.6} />
               </span>
-            ))}
+            </h1>
+
+            <p className="mx-auto mt-6 max-w-2xl text-[18px] lg:mx-0" style={{ color: "#000000" }}>
+              <WordSequence
+                text="AI-powered impact analysis that pins every affected file to the exact line number, grounded by JavaParser AST so the line numbers are real — not hallucinated."
+                delayStart={0.9}
+              />
+            </p>
+
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+              <Link
+                to="/app"
+                className="btn-primary inline-flex items-center gap-2 rounded-lg px-7 py-3.5 text-[14px] font-medium text-white transition-opacity hover:opacity-90"
+              >
+                Analyze your repo <IconArrowRight size={16} />
+              </Link>
+              <Link
+                to="/app"
+                className="btn-secondary inline-flex items-center gap-2 rounded-lg border px-7 py-3.5 text-[14px] font-medium transition-colors hover:bg-[var(--surface-2)]"
+                style={{ borderColor: "#000000", color: "var(--text)" }}
+              >
+                See a demo
+              </Link>
+            </div>
+          </div>
+
+          <div className="flex justify-center lg:justify-end">
+            <AnimatedBob />
           </div>
         </div>
+      </section>
 
-        <div className="flex justify-center lg:justify-end">
-          <AnimatedBob />
-        </div>
-      </div>
-    </section>
+      {/* Ticker is outside the section/grid so 100vw + negative margins work */}
+      <RunningHeadline />
+    </>
   );
 }
 
@@ -165,7 +187,7 @@ function AnimatedBob() {
         <img src={bobImg} alt="Bob the robot" className="bob-img" />
       </div>
       <div className="bob-bubble">
-        <span>Hi, I’m Bob. I track how changes in one repo affect your entire ecosystem.</span>
+        <span>Hi, I'm Bob. I track how changes in one repo affect your entire ecosystem.</span>
       </div>
     </div>
   );
@@ -226,7 +248,7 @@ function HowItWorks() {
     {
       n: "02",
       t: "Describe your intended change",
-      d: "Plain English. ‘Rename Owner to Customer.’ ‘Change the return type of findById to Optional<T>.’ Optional: paste the line number you’re editing.",
+      d: "Plain English. 'Rename Owner to Customer.' 'Change the return type of findById to Optional<T>.' Optional: paste the line number you're editing.",
     },
     {
       n: "03",
@@ -236,7 +258,7 @@ function HowItWorks() {
     {
       n: "04",
       t: "AST verifies every line number",
-      d: "Bob’s output is reconciled against the AST. Confirmed refs get a green badge. Unverified refs are surfaced honestly with an amber badge.",
+      d: "Bob's output is reconciled against the AST. Confirmed refs get a green badge. Unverified refs are surfaced honestly with an amber badge.",
     },
     {
       n: "05",
@@ -246,7 +268,7 @@ function HowItWorks() {
     {
       n: "06",
       t: "Export & ship",
-      d: "Download JSON, print to PDF, or attach Bob’s session log to your hackathon submission.",
+      d: "Download JSON, print to PDF, or attach Bob's session log to your hackathon submission.",
     },
   ];
   return (
@@ -295,7 +317,7 @@ function GraphPreview() {
           title="One change. Every consequence. Mapped to the line."
         />
         <div
-          className="mt-10 overflow-hidden rounded-lg border"
+          className="graph-card mt-10 overflow-hidden rounded-lg border"
           style={{ background: "var(--surface)", borderColor: "var(--border)" }}
         >
           <div
@@ -363,12 +385,12 @@ function Features() {
     {
       icon: IconCode,
       title: "Exact line numbers",
-      body: "Every affected file pinned to the line. No fuzzy ‘around line 200.’",
+      body: "Every affected file pinned to the line. No fuzzy 'around line 200.'",
     },
     {
       icon: IconShieldCheck,
       title: "AST grounding",
-      body: "Bob’s claims reconciled against JavaParser. Verified refs get a green badge; unverified are flagged honestly.",
+      body: "Bob's claims reconciled against JavaParser. Verified refs get a green badge; unverified are flagged honestly.",
     },
     {
       icon: IconChartDots3,
@@ -448,7 +470,7 @@ function Compare() {
           className="mt-10 overflow-hidden rounded-lg border"
           style={{ borderColor: "var(--border)" }}
         >
-          <table className="w-full border-collapse text-left text-[13px]">
+          <table className="w-full border-collapse text-left text-[15px]">
             <thead>
               <tr style={{ background: "var(--surface-2)", color: "var(--text-2)" }}>
                 <th className="px-4 py-3 font-medium">Capability</th>
@@ -477,7 +499,10 @@ function Compare() {
                       key={i}
                       className="px-4 py-3"
                       style={{
-                        background: i === 0 ? "color-mix(in oklab, var(--accent) 4%, transparent)" : undefined,
+                        background:
+                          i === 0
+                            ? "color-mix(in oklab, var(--accent) 4%, transparent)"
+                            : undefined,
                       }}
                     >
                       {v === true ? (
@@ -538,15 +563,14 @@ function CTAFooter() {
   return (
     <section
       id="cta"
-      className="section-reveal px-6 py-24"
-      style={{ background: "var(--surface-2)", ["--section-delay" as never]: "0.7s" }}
+      className="section-reveal cta-gradient px-6 py-24"
+      style={{ ["--section-delay" as never]: "0.7s" }}
     >
       <div className="mx-auto max-w-2xl text-center">
-        <IconSparkles size={28} style={{ color: "var(--accent)" }} className="mx-auto" />
-        <h2 className="mt-4 text-[36px] font-medium leading-tight" style={{ color: "var(--text)" }}>
+        <h2 className="cta-title mt-4 text-[36px] font-medium leading-tight">
           Try it on your repo.
         </h2>
-        <p className="mt-3 text-[15px]" style={{ color: "var(--text-2)" }}>
+        <p className="cta-subtitle mt-3 text-[15px]">
           Spring PetClinic ships preloaded — paste your own Java repo to see your codebase mapped.
         </p>
         <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
@@ -567,7 +591,11 @@ function Footer() {
   return (
     <footer
       className="section-reveal border-t px-6 py-6"
-      style={{ background: "var(--surface)", borderColor: "var(--border)", ["--section-delay" as never]: "0.8s" }}
+      style={{
+        background: "var(--surface)",
+        borderColor: "var(--border)",
+        ["--section-delay" as never]: "0.8s",
+      }}
     >
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -602,3 +630,4 @@ function Landing() {
 
 // avoid lint complaints about unused imports
 void IconBolt;
+void IconGitBranch;

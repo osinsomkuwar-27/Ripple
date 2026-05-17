@@ -96,7 +96,6 @@ label,
   font-family: var(--font-mono);
 }
 
-/* Keep cards and controls more restrained */
 .rounded-lg {
   border-radius: var(--radius-lg);
 }
@@ -288,6 +287,90 @@ label,
   background: #3b82f6;
 }
 
+/* ─── RUNNING HEADLINE ─────────────────────────────────────────────────────── */
+
+.running-headline {
+  /* Full bleed — works because the element is now outside any max-width container */
+  display: block;
+  width: 100%;
+  overflow: hidden;
+
+  background: #1d4ed8;
+  border-top: 1px solid #000000;
+  border-bottom: 1px solid #000000;
+  color: #ffffff;
+
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 900;
+  font-style: normal;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+
+  padding: 8px 0;
+}
+
+/* TRACK */
+.running-headline__track {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  min-width: 200%;
+  white-space: nowrap;
+  animation: headlineScroll 45s linear infinite;
+}
+
+/* GROUP */
+.running-headline__group {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-shrink: 0;
+  padding-right: 32px;
+}
+
+/* TEXT ITEMS */
+.headline-chunk {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* COLORS */
+.headline-speed {
+  color: #ffffff;
+}
+
+.headline-files {
+  color: #ffffff;
+}
+
+.headline-verified {
+  color: #ffffff;
+}
+
+.headline-dot {
+  color: #ffffff;
+}
+
+/* ANIMATION */
+@keyframes headlineScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ACCESSIBILITY */
+@media (prefers-reduced-motion: reduce) {
+  .running-headline__track {
+    animation: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+
 .hero-italic,
 .section-italic {
   font-style: italic;
@@ -338,6 +421,32 @@ label,
   margin-right: 0;
 }
 
+.hero-emphasis {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+}
+
+.graph-card {
+  max-width: 900px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cta-gradient {
+  background: #0f1523;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.cta-title,
+.cta-subtitle {
+  color: #ffffff;
+}
+
 .lift-card {
   transition: transform 200ms ease, box-shadow 200ms ease;
 }
@@ -349,13 +458,13 @@ label,
 
 @keyframes buttonPulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(31, 78, 216, 0.4);
+    box-shadow: 0 0 0 0 rgba(21, 128, 61, 0.4);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(31, 78, 216, 0);
+    box-shadow: 0 0 0 10px rgba(21, 128, 61, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(31, 78, 216, 0);
+    box-shadow: 0 0 0 0 rgba(21, 128, 61, 0);
   }
 }
 
@@ -363,19 +472,19 @@ label,
   animation: buttonPulse 2.6s ease-out infinite;
   font-size: 16px;
   border: 1px solid #000000;
-  background: #ff4d00 !important;
+  background: #15803d !important;
   color: #ffffff;
 }
 
 .btn-primary:hover {
-  background: #e64500 !important;
+  background: #116b32 !important;
   color: #ffffff;
 }
 
 .btn-primary:active,
 .btn-primary:focus,
 .btn-primary:visited {
-  background: #ff4d00 !important;
+  background: #15803d !important;
   color: #ffffff;
 }
 
@@ -452,9 +561,9 @@ label,
 .nav-dot {
   width: 34px;
   height: 34px;
-  border-radius: 8px;
+  border-radius: 999px;
   background: transparent;
-  border: none;
+  border: 1px solid #000000;
   box-shadow: none;
   flex-shrink: 0;
   display: inline-flex;
@@ -526,10 +635,18 @@ label,
   transition: transform 160ms ease, box-shadow 160ms ease;
 }
 
+.nav-cta:link,
+.nav-cta:visited,
+.nav-cta:active,
+.nav-cta:focus,
+.nav-cta:focus-visible {
+  color: #ffffff;
+}
+
 .nav-cta:hover,
 .nav-cta:active,
 .nav-cta:visited {
-  color: #ffffff;
+  color: #ffffff !important;
   background: #1a3ba0;
 }
 
@@ -551,6 +668,8 @@ label,
 
 .landing-grid {
   position: relative;
+  /* Must NOT have overflow: hidden — that would clip the full-bleed ticker */
+  overflow: visible;
 }
 
 .landing-grid::before {
@@ -564,7 +683,7 @@ label,
     ),
     linear-gradient(to bottom, rgba(229, 231, 235, 0.95) 1px, transparent 1px);
   background-size: 28px 28px;
-  opacity: 0.75;
+  opacity: 0.85;
   pointer-events: none;
   z-index: 0;
 }

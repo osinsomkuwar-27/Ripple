@@ -58,6 +58,25 @@ function AppShell() {
   const [graphSeed, setGraphSeed] = useState(0);
   const [changedFile, setChangedFile] = useState("");
   const [files, setFiles] = useState<ImpactFile[]>([]);
+  const [autoRunPending, setAutoRunPending] = useState(false);
+  const autoRunTriggeredRef = useRef(false);
+
+  useEffect(() => {
+    const qs = new URLSearchParams(window.location.search);
+    const repo = qs.get("repo")?.trim() ?? "";
+    const intentQ = qs.get("intent")?.trim() ?? "";
+    const changedQ = qs.get("changedFile")?.trim() ?? "";
+    const autoRunQ = qs.get("autoRun") === "1";
+
+    if (repo) {
+      setRepoUrl(repo);
+      setRepo("connecting");
+      setTimeout(() => setRepo("connected"), 200);
+    }
+    if (intentQ) setIntent(intentQ);
+    if (changedQ) setChangedFile(changedQ);
+    if (autoRunQ) setAutoRunPending(true);
+  }, []);
 
   const connectRepo = (url?: string) => {
     const target = (url ?? repoUrl).trim();
@@ -117,6 +136,13 @@ function AppShell() {
       alert("Analysis failed — is Osin's backend running?");
     }
   };
+
+  useEffect(() => {
+    if (autoRunPending && canAnalyze && !autoRunTriggeredRef.current) {
+      autoRunTriggeredRef.current = true;
+      void runAnalysis();
+    }
+  }, [autoRunPending, canAnalyze]);
 
   const selectedFile = useMemo(
     () => files.find((f) => f.id === selectedId) ?? null,

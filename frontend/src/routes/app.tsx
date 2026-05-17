@@ -103,12 +103,15 @@ function AppShell() {
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const wordCount = intent.trim().split(/\s+/).filter(Boolean).length;
-  const canAnalyze = repo === "connected" && wordCount >= 10 && phase !== "running";
+  const canAnalyze =
+    repo === "connected" &&
+    (wordCount >= 10 || (autoRunPending && !!intent.trim())) &&
+    phase !== "running";
 
   useEffect(() => () => timersRef.current.forEach(clearTimeout), []);
 
   const runAnalysis = async () => {
-    if (!canAnalyze) return;
+    if (!(repo === "connected" && phase !== "running")) return;
     setPhase("running");
     setStepIndex(0);
     setSelectedId(null);
